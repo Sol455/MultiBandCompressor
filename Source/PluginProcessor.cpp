@@ -152,7 +152,7 @@ void MultibandCompressorAudioProcessor::processBlock (juce::AudioBuffer<float>& 
     // interleaved by keeping the same state.
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
-        auto* channelData = buffer.getWritePointer (channel);
+        auto*  channelData = buffer.getWritePointer (channel);
 
         // ..do something to the data...
     }
@@ -166,7 +166,9 @@ bool MultibandCompressorAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* MultibandCompressorAudioProcessor::createEditor()
 {
-    return new MultibandCompressorAudioProcessorEditor (*this);
+//    return new MultibandCompressorAudioProcessorEditor (*this);
+    return new juce::GenericAudioProcessorEditor(*this); 
+    
 }
 
 //==============================================================================
@@ -183,9 +185,51 @@ void MultibandCompressorAudioProcessor::setStateInformation (const void* data, i
     // whose contents will have been created by the getStateInformation() call.
 }
 
+juce::AudioProcessorValueTreeState::ParameterLayout MultibandCompressorAudioProcessor::createParameterLayout()
+{
+    APVTS::ParameterLayout layout;
+
+    using namespace juce;
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(ParameterID {"threshold", 1},
+                                                    "Threshold",
+                                                    juce::NormalisableRange<float>(-60, 12, 1, 1),
+                                                    0 ));
+
+    layout.add(std::make_unique<AudioParameterFloat> (ParameterID { "gain", 1 }, "Gain", NormalisableRange<float> (0.0f, 1.0f), 0.9f));
+
+
+    auto attackReleaseRange = juce::NormalisableRange<float>(5, 500, 1, 1);
+    
+    layout.add(std::make_unique<AudioParameterFloat>(ParameterID {"attack",1},
+                                                    "Attack ",
+                                                    attackReleaseRange,
+                                                    50));
+    
+    layout.add(std::make_unique<AudioParameterFloat>(ParameterID {"release", 1},
+                                                    "Release",
+                                                     attackReleaseRange,
+                                                    250));
+    
+    auto choices = std::vector<double>{1,1.5,2,3,4,5,6,7,8,10,15,20,50,100};
+    
+    juce::StringArray sa;
+    for (auto choice : choices)
+    {
+        sa.add(juce::String(choice, 1));
+    }
+    
+    layout.add(std::make_unique<AudioParameterChoice>(ParameterID {"ratio", 1},
+                                                      "Ratio",
+                                                      sa,
+                                                      3 ));
+    return layout;
+}
+
 //==============================================================================
 // This creates new instances of the plugin..
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new MultibandCompressorAudioProcessor();
 }
+ 

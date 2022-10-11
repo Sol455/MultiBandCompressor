@@ -177,12 +177,20 @@ void MultibandCompressorAudioProcessor::getStateInformation (juce::MemoryBlock& 
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
+//    juce::MemoryOutputStream mos(destData, true);
+//    apvts.state.writeToStream(mos);
 }
+
 
 void MultibandCompressorAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
+// You should use this method to restore your parameters from this memory block,
+// whose contents will have been created by the getStateInformation() call.
+// auto tree = juce::ValueTree::readFromData(data, sizeInBytes);
+//
+//    if (tree.isValid()) {
+//        apvts.replaceState(tree);
+//    }
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout MultibandCompressorAudioProcessor::createParameterLayout()
@@ -200,25 +208,25 @@ juce::AudioProcessorValueTreeState::ParameterLayout MultibandCompressorAudioProc
 
 
     auto attackReleaseRange = juce::NormalisableRange<float>(5, 500, 1, 1);
-    
+
     layout.add(std::make_unique<AudioParameterFloat>(ParameterID {"attack",1},
                                                     "Attack ",
                                                     attackReleaseRange,
                                                     50));
-    
+
     layout.add(std::make_unique<AudioParameterFloat>(ParameterID {"release", 1},
                                                     "Release",
                                                      attackReleaseRange,
                                                     250));
-    
+
     auto choices = std::vector<double>{1,1.5,2,3,4,5,6,7,8,10,15,20,50,100};
-    
+
     juce::StringArray sa;
     for (auto choice : choices)
     {
         sa.add(juce::String(choice, 1));
     }
-    
+
     layout.add(std::make_unique<AudioParameterChoice>(ParameterID {"ratio", 1},
                                                       "Ratio",
                                                       sa,
@@ -233,3 +241,6 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
     return new MultibandCompressorAudioProcessor();
 }
  
+
+
+

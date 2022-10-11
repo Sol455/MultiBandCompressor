@@ -61,7 +61,7 @@ public:
     static APVTS::ParameterLayout createParameterLayout();
 
     //Class initilisation
-    APVTS aptvs{*this, nullptr, "Parameters", createParameterLayout() };
+    APVTS apvts{* this, nullptr, "Parameters", createParameterLayout() };
 private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MultibandCompressorAudioProcessor)

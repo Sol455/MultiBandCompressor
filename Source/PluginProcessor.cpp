@@ -177,8 +177,8 @@ void MultibandCompressorAudioProcessor::getStateInformation (juce::MemoryBlock& 
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
-//    juce::MemoryOutputStream mos(destData, true);
-//    apvts.state.writeToStream(mos);
+    juce::MemoryOutputStream mos(destData, true);
+    apvts.state.writeToStream(mos);
 }
 
 
@@ -186,11 +186,11 @@ void MultibandCompressorAudioProcessor::setStateInformation (const void* data, i
 {
 // You should use this method to restore your parameters from this memory block,
 // whose contents will have been created by the getStateInformation() call.
-// auto tree = juce::ValueTree::readFromData(data, sizeInBytes);
-//
-//    if (tree.isValid()) {
-//        apvts.replaceState(tree);
-//    }
+ auto tree = juce::ValueTree::readFromData(data, sizeInBytes);
+
+    if (tree.isValid()) {
+        apvts.replaceState(tree);
+    }
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout MultibandCompressorAudioProcessor::createParameterLayout()
@@ -201,6 +201,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout MultibandCompressorAudioProc
 
     layout.add(std::make_unique<juce::AudioParameterFloat>(ParameterID {"threshold", 1},
                                                     "Threshold",
+                                                    juce::NormalisableRange<float>(-60, 12, 1, 1),
+                                                    0 ));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(ParameterID {"testhold", 1},
+                                                    "testhold",
                                                     juce::NormalisableRange<float>(-60, 12, 1, 1),
                                                     0 ));
 

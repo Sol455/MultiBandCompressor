@@ -93,8 +93,15 @@ void MultibandCompressorAudioProcessor::changeProgramName (int index, const juce
 //==============================================================================
 void MultibandCompressorAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
+//
+    juce::dsp::ProcessSpec spec; // Create process spec object --> needed to initialised DSP -->
+    spec.maximumBlockSize = samplesPerBlock; // set max number of samples to be processed
+    spec.numChannels = getTotalNumOutputChannels();  //Number of channels to be configured to compressed
+    spec.sampleRate = sampleRate; //Sample rate
+    
+    compressor.prepare(spec); // send spec object to the compressor to prepare to play audio;
+    
+    
 }
 
 void MultibandCompressorAudioProcessor::releaseResources()
@@ -143,19 +150,12 @@ void MultibandCompressorAudioProcessor::processBlock (juce::AudioBuffer<float>& 
     // this code if your algorithm always overwrites all the output channels.
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
-
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        auto*  channelData = buffer.getWritePointer (channel);
-
-        // ..do something to the data...
-    }
+    
+    auto block= juce::dsp::AudioBlock<float>(buffer); //create audio block feed in buffer input
+    auto context = juce::dsp::ProcessContextReplacing<float>(block); //replaces audio in the buffer with processed audio --> creates context
+    
+    compressor.process(context); // process compressor audio from context on audio buffer
+    
 }
 
 //==============================================================================
@@ -177,6 +177,8 @@ void MultibandCompressorAudioProcessor::getStateInformation (juce::MemoryBlock& 
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
+    
+    //get the state information from parameters
     juce::MemoryOutputStream mos(destData, true);
     apvts.state.writeToStream(mos);
 }
@@ -186,6 +188,8 @@ void MultibandCompressorAudioProcessor::setStateInformation (const void* data, i
 {
 // You should use this method to restore your parameters from this memory block,
 // whose contents will have been created by the getStateInformation() call.
+    
+    //update the state information from audio parqamaters value tree
  auto tree = juce::ValueTree::readFromData(data, sizeInBytes);
 
     if (tree.isValid()) {
@@ -195,6 +199,7 @@ void MultibandCompressorAudioProcessor::setStateInformation (const void* data, i
 
 juce::AudioProcessorValueTreeState::ParameterLayout MultibandCompressorAudioProcessor::createParameterLayout()
 {
+    //define and add parameters
     APVTS::ParameterLayout layout;
 
     using namespace juce;

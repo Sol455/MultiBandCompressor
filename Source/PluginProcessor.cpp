@@ -22,6 +22,20 @@ MultibandCompressorAudioProcessor::MultibandCompressorAudioProcessor()
                        )
 #endif
 {
+    //Retrieve APVTS stored paramaters and assign them to cached pointers
+    attack = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("Attack"));
+    //Assert that parameter names are spelt correctly
+    jassert(attack !=nullptr);
+    
+    release = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("Release"));
+    jassert(release !=nullptr);
+    
+    threshold = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("Threshold"));
+    jassert(threshold !=nullptr);
+    
+    ratio = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("Ratio"));
+    jassert(ratio !=nullptr);
+
 }
 
 MultibandCompressorAudioProcessor::~MultibandCompressorAudioProcessor()
@@ -151,6 +165,12 @@ void MultibandCompressorAudioProcessor::processBlock (juce::AudioBuffer<float>& 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
     
+    //retrive parameter values from private cache and asign to compressor controls
+    compressor.setAttack(attack->get());
+    compressor.setRelease(release ->get());
+    compressor.setThreshold(threshold->get());
+    //use helper function to retrieve the string currently set in the string array then get calculate float value from this string
+    //compressor.setRatio(ratio->getCurrentChoiceName().getFloatValue());
     auto block= juce::dsp::AudioBlock<float>(buffer); //create audio block feed in buffer input
     auto context = juce::dsp::ProcessContextReplacing<float>(block); //replaces audio in the buffer with processed audio --> creates context
     
@@ -204,29 +224,27 @@ juce::AudioProcessorValueTreeState::ParameterLayout MultibandCompressorAudioProc
 
     using namespace juce;
 
-    layout.add(std::make_unique<juce::AudioParameterFloat>(ParameterID {"threshold", 1},
+    layout.add(std::make_unique<juce::AudioParameterFloat>(ParameterID {"Threshold", 1},
                                                     "Threshold",
                                                     juce::NormalisableRange<float>(-60, 12, 1, 1),
                                                     0 ));
-    layout.add(std::make_unique<juce::AudioParameterFloat>(ParameterID {"testhold", 1},
-                                                    "testhold",
-                                                    juce::NormalisableRange<float>(-60, 12, 1, 1),
-                                                    0 ));
 
-    layout.add(std::make_unique<AudioParameterFloat> (ParameterID { "gain", 1 }, "Gain", NormalisableRange<float> (0.0f, 1.0f), 0.9f));
+
+    layout.add(std::make_unique<AudioParameterFloat> (ParameterID { "Gain", 1 }, "Gain", NormalisableRange<float> (0.0f, 1.0f), 0.9f));
 
 
     auto attackReleaseRange = juce::NormalisableRange<float>(5, 500, 1, 1);
 
-    layout.add(std::make_unique<AudioParameterFloat>(ParameterID {"attack",1},
-                                                    "Attack ",
+    layout.add(std::make_unique<AudioParameterFloat>(ParameterID {"Attack",1},
+                                                    "Attack",
                                                     attackReleaseRange,
                                                     50));
 
-    layout.add(std::make_unique<AudioParameterFloat>(ParameterID {"release", 1},
+    layout.add(std::make_unique<AudioParameterFloat>(ParameterID {"Release", 1},
                                                     "Release",
                                                      attackReleaseRange,
                                                     250));
+    
 
     auto choices = std::vector<double>{1,1.5,2,3,4,5,6,7,8,10,15,20,50,100};
 
@@ -236,7 +254,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout MultibandCompressorAudioProc
         sa.add(juce::String(choice, 1));
     }
 
-    layout.add(std::make_unique<AudioParameterChoice>(ParameterID {"ratio", 1},
+    layout.add(std::make_unique<AudioParameterChoice>(ParameterID {"Ratio", 1},
                                                       "Ratio",
                                                       sa,
                                                       3 ));

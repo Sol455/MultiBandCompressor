@@ -56,15 +56,22 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
     
+    //Assing shorthand to audioProcessorValueTreeState
     using APVTS = juce::AudioProcessorValueTreeState;
     //create parameterlayout -- function definition, define function to create parameter layout
     static APVTS::ParameterLayout createParameterLayout();
 
-    //Class initilisation
+    //Class initilisation for APVTS
     APVTS apvts{* this, nullptr, "Parameters", createParameterLayout() };
 private:
     
-    juce::dsp::Compressor<float> compressor; 
+    //Initilised compressor object from DSP module
+    juce::dsp::Compressor<float> compressor;
+    //Create cached versiion of audio parameters to avoid constant querying, early-on optimisation
+    juce::AudioParameterFloat* attack {nullptr};
+    juce::AudioParameterFloat* release {nullptr};
+    juce::AudioParameterFloat* threshold {nullptr};
+    juce::AudioParameterChoice* ratio {nullptr}; 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MultibandCompressorAudioProcessor)
 };

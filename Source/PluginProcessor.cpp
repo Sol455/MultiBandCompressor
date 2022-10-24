@@ -35,6 +35,11 @@ MultibandCompressorAudioProcessor::MultibandCompressorAudioProcessor()
     
     ratio = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("Ratio"));
     jassert(ratio !=nullptr);
+    
+    bypassed = dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter("Bypassed"));
+    jassert(bypassed !=nullptr);
+    
+    
 
 }
 
@@ -169,10 +174,12 @@ void MultibandCompressorAudioProcessor::processBlock (juce::AudioBuffer<float>& 
     compressor.setAttack(attack->get());
     compressor.setRelease(release ->get());
     compressor.setThreshold(threshold->get());
-    //use helper function to retrieve the string currently set in the string array then get calculate float value from this string
-    //compressor.setRatio(ratio->getCurrentChoiceName().getFloatValue());
+    compressor.setRatio(ratio->getCurrentChoiceName().getFloatValue());   //use helper function to retrieve the string currently set in the string array then get calculate float value from this string
+    
     auto block= juce::dsp::AudioBlock<float>(buffer); //create audio block feed in buffer input
     auto context = juce::dsp::ProcessContextReplacing<float>(block); //replaces audio in the buffer with processed audio --> creates context
+    
+    context.isBypassed = bypassed->get(); //toggle bypass
     
     compressor.process(context); // process compressor audio from context on audio buffer
     
@@ -230,9 +237,6 @@ juce::AudioProcessorValueTreeState::ParameterLayout MultibandCompressorAudioProc
                                                     0 ));
 
 
-    layout.add(std::make_unique<AudioParameterFloat> (ParameterID { "Gain", 1 }, "Gain", NormalisableRange<float> (0.0f, 1.0f), 0.9f));
-
-
     auto attackReleaseRange = juce::NormalisableRange<float>(5, 500, 1, 1);
 
     layout.add(std::make_unique<AudioParameterFloat>(ParameterID {"Attack",1},
@@ -258,6 +262,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout MultibandCompressorAudioProc
                                                       "Ratio",
                                                       sa,
                                                       3 ));
+    
+    layout.add(std::make_unique<AudioParameterBool>(ParameterID {"Bypassed", 1},
+                                                    "Bypassed", false));
     return layout;
 }
 

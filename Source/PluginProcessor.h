@@ -156,7 +156,10 @@ public:
     APVTS apvts{* this, nullptr, "Parameters", createParameterLayout() };
 private:
     
-    Compressorband compressor;
+    std::array<Compressorband, 3> compressors;
+    Compressorband& lowBandComp = compressors[0];
+    Compressorband& midBandComp = compressors[1];
+    Compressorband& highBandComp = compressors[2];
     
     using Filter = juce::dsp::LinkwitzRileyFilter<float>;
     

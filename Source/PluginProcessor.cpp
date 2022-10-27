@@ -363,8 +363,8 @@ bool MultibandCompressorAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* MultibandCompressorAudioProcessor::createEditor()
 {
-//    return new MultibandCompressorAudioProcessorEditor (*this);
-    return new juce::GenericAudioProcessorEditor(*this); 
+    return new MultibandCompressorAudioProcessorEditor (*this);
+//    return new juce::GenericAudioProcessorEditor(*this); 
     
 }
 

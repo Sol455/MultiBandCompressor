@@ -7,7 +7,22 @@
 */
 
 #pragma once
-
+/*
+ 1) Global controls (x-over sliders
+ 2) Main Band controls (attack,release threshold sliders)
+ 3) Ass solo/mute/bypass buttons
+ 4) Band select functionality
+ 5) Ban select buttons reflect the solo, mute bypass button state implement logic that prevents you from having both mute & solo button at the same time
+ 6) custom look & feel for sliders and toggle buttons
+ 7) spectrum analyser overview
+ 8) Data structure for the spectrum analyzer
+ 9) Fifo usage in plugin processor process block, need a bit of dsp modification
+ 10) Implementation of the analyser rendering pre-processing paths
+ 11) Drawing crossovers on top of the analyzer plot
+ 12) Drawing gain reduction on top of the analyzer
+ 13) analyzer Bypass
+ 14) Global bypass button
+ */
 #include <JuceHeader.h>
 
 namespace Params {

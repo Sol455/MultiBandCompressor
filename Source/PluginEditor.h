@@ -160,11 +160,26 @@ void addLabelPairs(Labels& labels, const ParamType& param, const SuffixType& suf
 
 }
 
+struct CompressorBandControls : juce::Component
+{
+    CompressorBandControls(juce::AudioProcessorValueTreeState& apvts );
+    void resized() override;
+    void paint (juce::Graphics& g) override;
+private:
+    RotarySlider attackSlider, releaseSlider, thresholdSlider, ratioSlider;
+    using Attachment = juce::AudioProcessorValueTreeState::SliderAttachment;
+    std::unique_ptr<Attachment> attackSliderAttachment,
+                                releaseSliderAttachment,
+                                thresholdSliderAttachment,
+                                ratioSliderAttachment;
+};
+
 struct GlobalControls : juce::Component
 {
     GlobalControls(juce::AudioProcessorValueTreeState& apvts);
     void paint (juce::Graphics& g) override;
     void resized() override;
+    
 private:
     using RSWL = RotarySliderWithLabels;
     std::unique_ptr<RSWL> inGainSlider, lowMidXoverSlider, midHighXoverSlider, outGainSlider;
@@ -194,8 +209,9 @@ private:
     // access the processor object that created it.
     MultibandCompressorAudioProcessor& audioProcessor;
     
-    Placeholder controlBar, analyzer, /*globalControls*/ bandControls;
+    Placeholder controlBar, analyzer/*globalControls bandControls;*/;
     GlobalControls globalcontrols{audioProcessor.apvts};
+    CompressorBandControls bandControls{audioProcessor.apvts};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MultibandCompressorAudioProcessorEditor)
 };

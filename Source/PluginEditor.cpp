@@ -272,9 +272,28 @@ juce::String RotarySliderWithLabels::getDisplayString() const
     return str;
 }
 
+void RotarySliderWithLabels::changeParam(juce::RangedAudioParameter *p)
+{
+    param = p;
+    repaint();
+}
 
 
 //==============================================================================
+juce::String RatioSlider::getDisplayString() const
+{
+    auto choiceParam = dynamic_cast<juce::AudioParameterChoice*>(param);
+    jassert(choiceParam != nullptr);
+    
+    auto currentChoice = choiceParam->getCurrentChoiceName();
+    if(currentChoice.contains(".0"))
+        currentChoice = currentChoice.substring(0, currentChoice.indexOf("."));
+    currentChoice << ":1";
+    
+    return currentChoice;
+}
+//==============================================================================
+
 
 Placeholder::Placeholder()
 {
@@ -282,17 +301,38 @@ Placeholder::Placeholder()
     customColour = juce::Colour(r.nextInt(255),r.nextInt(255),r.nextInt(255));
 }
 //==============================================================================
-CompressorBandControls::CompressorBandControls(juce::AudioProcessorValueTreeState& apvts)
+CompressorBandControls::CompressorBandControls(juce::AudioProcessorValueTreeState& apv) :
+apvts(apv),
+attackSlider(nullptr, "ms", "ATTACK"),
+releaseSlider(nullptr, "ms", "RELEASE"),
+thresholdSlider(nullptr, "dB", "THRESH"),
+ratioSlider(nullptr, "")
 {
     using namespace Params;
     const auto& params = GetParams();
     
-    auto getParamHelper = [&params, &apvts](const auto& name) -> auto&
+    auto getParamHelper = [&params, &apvts = this -> apvts](const auto& name) -> auto&
     {
         return getParam(apvts, params, name);
     };
+
+    attackSlider.changeParam(&getParamHelper(Names::Attack_Mid_Band));
+    releaseSlider.changeParam(&getParamHelper(Names::Release_Mid_Band));
+    thresholdSlider.changeParam(&getParamHelper(Names::Threshold_Mid_Band));
+    ratioSlider.changeParam(&getParamHelper(Names::Ratio_Mid_Band));
     
-    auto MakeAttachmentHelper = [&params, &apvts](auto& attachment,
+    addLabelPairs(attackSlider.labels, getParamHelper(Names::Attack_Mid_Band), "ms");
+    addLabelPairs(releaseSlider.labels, getParamHelper(Names::Release_Mid_Band), "ms");
+    addLabelPairs(thresholdSlider.labels, getParamHelper(Names::Threshold_Mid_Band), "dB");
+    
+    ratioSlider.labels.add({0.f, "1:1"});
+    auto ratioParam = dynamic_cast<juce::AudioParameterChoice*>(&getParamHelper(Names::Ratio_Mid_Band));
+    ratioSlider.labels.add({1.0f,
+        juce::String(ratioParam->choices.getReference(ratioParam->choices.size() -1).getIntValue()) + ":1"});
+
+
+    
+    auto MakeAttachmentHelper = [&params, &apvts = this -> apvts](auto& attachment,
                                                   const auto& name,
                                                   auto& slider)
     {
@@ -362,17 +402,17 @@ GlobalControls::GlobalControls(juce::AudioProcessorValueTreeState& apvts)
     auto& GainOutParam = getParamHelper(Names::Gain_out);
 
     
-    inGainSlider = std::make_unique<RSWL>(gainInParam,
+    inGainSlider = std::make_unique<RSWL>(&gainInParam,
                                           "dB",
                                           "INPUT TRIM");
-    lowMidXoverSlider = std::make_unique<RSWL>(lowMidParam,
+    lowMidXoverSlider = std::make_unique<RSWL>(&lowMidParam,
                                                "Hz",
                                                "LOW-MID X-OVER");
     
-    midHighXoverSlider = std::make_unique<RSWL>(midHighParam,
+    midHighXoverSlider = std::make_unique<RSWL>(&midHighParam,
                                                 "Hz",
                                                 "MID-HI X-OVER");
-    outGainSlider = std::make_unique<RSWL>(GainOutParam,
+    outGainSlider = std::make_unique<RSWL>(&GainOutParam,
                                            "dB",
                                            "OUTPUT TRIM");
     
@@ -490,6 +530,7 @@ MultibandCompressorAudioProcessorEditor::MultibandCompressorAudioProcessorEditor
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
+    setLookAndFeel(&lnf);
     //addAndMakeVisible(controlBar);
     //addAndMakeVisible(analyzer);
     addAndMakeVisible(globalcontrols);
@@ -500,6 +541,7 @@ MultibandCompressorAudioProcessorEditor::MultibandCompressorAudioProcessorEditor
 
 MultibandCompressorAudioProcessorEditor::~MultibandCompressorAudioProcessorEditor()
 {
+    setLookAndFeel(nullptr);
 }
 
 //==============================================================================

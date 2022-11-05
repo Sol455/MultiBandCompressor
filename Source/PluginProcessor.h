@@ -24,7 +24,7 @@
  14) Global bypass button
  */
 #include <JuceHeader.h>
-#include "CompressorBand.h"
+#include "DSP/CompressorBand.h"
 
 
 

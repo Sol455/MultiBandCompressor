@@ -10,7 +10,8 @@
 
 #pragma once
 #include <JuceHeader.h>
-#include "Params.h"
+#include "../DSP/Params.h"
+
 
 struct RotarySliderWithLabels : juce::Slider
 {

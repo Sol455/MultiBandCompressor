@@ -313,6 +313,9 @@ Placeholder::Placeholder()
     juce::Random r;
     customColour = juce::Colour(r.nextInt(255),r.nextInt(255),r.nextInt(255));
 }
+
+//==============================================================================
+
 //==============================================================================
 CompressorBandControls::CompressorBandControls(juce::AudioProcessorValueTreeState& apv) :
 apvts(apv),
@@ -323,49 +326,11 @@ ratioSlider(nullptr, "")
 {
     using namespace Params;
     const auto& params = GetParams();
-    
+
     auto getParamHelper = [&params, &apvts = this -> apvts](const auto& name) -> auto&
     {
         return getParam(apvts, params, name);
     };
-
-    attackSlider.changeParam(&getParamHelper(Names::Attack_Mid_Band));
-    releaseSlider.changeParam(&getParamHelper(Names::Release_Mid_Band));
-    thresholdSlider.changeParam(&getParamHelper(Names::Threshold_Mid_Band));
-    ratioSlider.changeParam(&getParamHelper(Names::Ratio_Mid_Band));
-    
-    addLabelPairs(attackSlider.labels, getParamHelper(Names::Attack_Mid_Band), "ms");
-    addLabelPairs(releaseSlider.labels, getParamHelper(Names::Release_Mid_Band), "ms");
-    addLabelPairs(thresholdSlider.labels, getParamHelper(Names::Threshold_Mid_Band), "dB");
-    
-    ratioSlider.labels.add({0.f, "1:1"});
-    auto ratioParam = dynamic_cast<juce::AudioParameterChoice*>(&getParamHelper(Names::Ratio_Mid_Band));
-    ratioSlider.labels.add({1.0f,
-        juce::String(ratioParam->choices.getReference(ratioParam->choices.size() -1).getIntValue()) + ":1"});
-
-
-    
-    auto MakeAttachmentHelper = [&params, &apvts = this -> apvts](auto& attachment,
-                                                  const auto& name,
-                                                  auto& slider)
-    {
-        makeAttachment(attachment, apvts, params, name, slider);
-    };
-    MakeAttachmentHelper(attackSliderAttachment,
-                         Names::Attack_Mid_Band,
-                         attackSlider);
-    
-    MakeAttachmentHelper(releaseSliderAttachment,
-                         Names::Release_Mid_Band,
-                         releaseSlider);
-    
-    MakeAttachmentHelper(thresholdSliderAttachment,
-                         Names::Threshold_Mid_Band,
-                         thresholdSlider);
-    
-    MakeAttachmentHelper(ratioSliderAttachment,
-                         Names::Ratio_Mid_Band,
-                         ratioSlider);
     
     addAndMakeVisible(attackSlider);
     addAndMakeVisible(releaseSlider);
@@ -380,10 +345,6 @@ ratioSlider(nullptr, "")
     addAndMakeVisible(soloButton);
     addAndMakeVisible(muteButton);
     
-    MakeAttachmentHelper(bypassButtonAttachment, Names::Bypassed_Mid_Band, bypassButton);
-    MakeAttachmentHelper(soloButtonAttachment, Names::Solo_Mid_Band, soloButton);
-    MakeAttachmentHelper(muteButtonAttachment, Names::Mute_Mid_Band, muteButton);
-    
     lowBand.setName("Low");
     midBand.setName("Mid");
     highBand.setName("High");
@@ -391,6 +352,21 @@ ratioSlider(nullptr, "")
     lowBand.setRadioGroupId(1);
     midBand.setRadioGroupId(1);
     highBand.setRadioGroupId(1);
+    
+    auto buttonSwitcher = [safePtr = this->safePtr]()
+    {
+        if(auto* c = safePtr.getComponent())
+        {
+            c->updateAttachments();
+        }
+    };
+    
+    lowBand.onClick = buttonSwitcher;
+    midBand.onClick = buttonSwitcher;
+    highBand.onClick = buttonSwitcher;
+    
+    lowBand.setToggleState(true, juce::NotificationType::dontSendNotification);
+    updateAttachments();
     
     addAndMakeVisible(lowBand);
     addAndMakeVisible(midBand);
@@ -428,9 +404,6 @@ void CompressorBandControls::resized()
     flexBox.flexWrap = FlexBox::Wrap::noWrap;
     
     auto spacer = FlexItem().withWidth(4);
-    auto endCap = FlexItem().withWidth(6);
-    
-//    flexBox.items.add(endCap);
     
     flexBox.items.add(spacer);
     flexBox.items.add(FlexItem(bandButtonSelectBox).withWidth(50));
@@ -442,12 +415,170 @@ void CompressorBandControls::resized()
     flexBox.items.add(FlexItem(thresholdSlider).withFlex(1.f));
     flexBox.items.add(spacer);
     flexBox.items.add(FlexItem(ratioSlider).withFlex(1.f));
-//    flexBox.items.add(endCap);
     flexBox.items.add(spacer);
     flexBox.items.add(FlexItem(bandbuttonControlBox).withWidth(30));
     
     flexBox.performLayout(bounds);
+    
 }
+
+void drawModuleBackground(juce::Graphics &g,
+                         juce::Rectangle<int> bounds)
+{
+    using namespace juce;
+    g.setColour(Colours::blueviolet);
+    g.fillAll();
+    
+    auto localBounds = bounds;
+    
+    bounds.reduce(3, 3);
+    g.setColour(Colours::black);
+    g.fillRoundedRectangle(bounds.toFloat(), 3);
+    
+    g.drawRect(localBounds);
+}
+
+void CompressorBandControls::paint(juce::Graphics &g)
+{
+    auto bounds = getLocalBounds();
+    drawModuleBackground(g, bounds);
+    
+}
+
+void CompressorBandControls::updateAttachments()
+{
+    enum BandType
+    {
+        Low,
+        Mid,
+        High
+    };
+    
+    BandType bandType = [this]()
+    {
+        if(lowBand.getToggleState())
+            return BandType::Low;
+        if(midBand.getToggleState())
+            return BandType::Mid;
+        return BandType::High;
+    }();
+    
+    using namespace Params;
+    std::vector<Names> names;
+    
+    switch (bandType)
+    {
+                    
+        case Low:
+        {
+            names = std::vector<Names>
+            {
+                Names::Attack_Low_Band,
+                Names::Release_Low_Band,
+                Names::Threshold_Low_Band,
+                Names::Ratio_Low_Band,
+                Names::Mute_Low_Band,
+                Names::Solo_Low_Band,
+                Names::Bypassed_Low_Band
+            };
+            break;
+        }
+        case Mid:
+        {
+            names = std::vector<Names>
+            {
+                Names::Attack_Mid_Band,
+                Names::Release_Mid_Band,
+                Names::Threshold_Mid_Band,
+                Names::Ratio_Mid_Band,
+                Names::Mute_Mid_Band,
+                Names::Solo_Mid_Band,
+                Names::Bypassed_Mid_Band
+            };
+            break;
+        }
+        case High:
+        {
+            names = std::vector<Names>
+            {
+                Names::Attack_High_Band,
+                Names::Release_High_Band,
+                Names::Threshold_High_Band,
+                Names::Ratio_High_Band,
+                Names::Mute_High_Band,
+                Names::Solo_High_Band,
+                Names::Bypassed_High_Band
+            };
+            
+            break;
+        }
+    }
+    
+    enum Pos
+    {
+        Attack,
+        Release,
+        Threshold,
+        Ratio,
+        Mute,
+        Solo,
+        Bypass
+    };
+    
+    const auto& params = GetParams();
+    
+    auto getParamHelper = [&params, &apvts = this -> apvts, &names](const auto& pos) -> auto&
+    {
+        return getParam(apvts, params, names.at(pos));
+    };
+    
+    attackSliderAttachment.reset();
+    releaseSliderAttachment.reset();
+    thresholdSliderAttachment.reset();
+    ratioSliderAttachment.reset();
+    bypassButtonAttachment.reset();
+    soloButtonAttachment.reset();
+    muteButtonAttachment.reset();
+    
+    auto & attackParam = getParamHelper(Pos::Attack);
+    addLabelPairs(attackSlider.labels, attackParam, "ms");
+    attackSlider.changeParam(&attackParam);
+    
+    auto & releaseParam = getParamHelper(Pos::Release);
+    addLabelPairs(releaseSlider.labels, releaseParam, "ms");
+    releaseSlider.changeParam(&releaseParam);
+    
+    auto & threshParam = getParamHelper(Pos::Threshold);
+    addLabelPairs(thresholdSlider.labels, threshParam, "ms");
+    thresholdSlider.changeParam(&threshParam);
+    
+    auto& ratioParamRap = getParamHelper(Pos::Ratio);
+    
+    ratioSlider.labels.clear();
+    ratioSlider.labels.add({0.f, "1:1"});
+    auto ratioParam = dynamic_cast<juce::AudioParameterChoice*>(&ratioParamRap);
+    ratioSlider.labels.add({1.0f,
+        juce::String(ratioParam->choices.getReference(ratioParam->choices.size() -1).getIntValue()) + ":1"});
+    ratioSlider.changeParam(ratioParam);
+    
+    auto MakeAttachmentHelper = [&params, &apvts = this->apvts](auto& attachment,
+                                                  const auto& name,
+                                                  auto& slider)
+    {
+        makeAttachment(attachment, apvts, params, name, slider);
+    };
+    
+    MakeAttachmentHelper(attackSliderAttachment, names[Pos::Attack], attackSlider);
+    MakeAttachmentHelper(releaseSliderAttachment, names[Pos::Release], releaseSlider);
+    MakeAttachmentHelper(thresholdSliderAttachment, names[Pos::Threshold], thresholdSlider);
+    MakeAttachmentHelper(ratioSliderAttachment, names[Pos::Ratio], ratioSlider);
+    MakeAttachmentHelper(bypassButtonAttachment, names[Pos::Bypass], bypassButton);
+    MakeAttachmentHelper(soloButtonAttachment, names[Pos::Solo], soloButton);
+    MakeAttachmentHelper(muteButtonAttachment, names[Pos::Mute], muteButton);
+
+}
+
+
 //==============================================================================
 GlobalControls::GlobalControls(juce::AudioProcessorValueTreeState& apvts)
 {
@@ -486,6 +617,7 @@ GlobalControls::GlobalControls(juce::AudioProcessorValueTreeState& apvts)
     {
         makeAttachment(attachment, apvts, params, name, slider);
     };
+    
     MakeAttachmentHelper(inGainSliderAttachment,
                          Names::Gain_in,
                          *inGainSlider);
@@ -526,22 +658,6 @@ GlobalControls::GlobalControls(juce::AudioProcessorValueTreeState& apvts)
 
     
 }
-void drawModuleBackground(juce::Graphics &g,
-                         juce::Rectangle<int> bounds)
-{
-    using namespace juce;
-    g.setColour(Colours::blueviolet);
-    g.fillAll();
-    
-    auto localBounds = bounds;
-    
-    bounds.reduce(3, 3);
-    g.setColour(Colours::black);
-    g.fillRoundedRectangle(bounds.toFloat(), 3);
-    
-    g.drawRect(localBounds);
-}
-
 
 void GlobalControls::paint(juce::Graphics &g)
 {
@@ -575,16 +691,7 @@ void GlobalControls::resized()
     flexBox.performLayout(bounds);
 }
 
-
-void CompressorBandControls::paint(juce::Graphics &g)
-{
-  //  using namespace juce;
-    auto bounds = getLocalBounds();
-    //
-    drawModuleBackground(g, bounds);
-    
-}
-
+//=====Compressor band controls
 
 //==============================================================================
 
@@ -607,7 +714,6 @@ MultibandCompressorAudioProcessorEditor::~MultibandCompressorAudioProcessorEdito
     setLookAndFeel(nullptr);
 }
 
-//==============================================================================
 void MultibandCompressorAudioProcessorEditor::paint (juce::Graphics& g)
 {
 //    // (Our component is opaque, so we must completely fill the background with a solid colour)
@@ -633,3 +739,5 @@ void MultibandCompressorAudioProcessorEditor::resized()
     
     globalcontrols.setBounds(bounds);
 }
+
+//==============================================================================

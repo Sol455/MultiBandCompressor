@@ -383,6 +383,19 @@ ratioSlider(nullptr, "")
     MakeAttachmentHelper(bypassButtonAttachment, Names::Bypassed_Mid_Band, bypassButton);
     MakeAttachmentHelper(soloButtonAttachment, Names::Solo_Mid_Band, soloButton);
     MakeAttachmentHelper(muteButtonAttachment, Names::Mute_Mid_Band, muteButton);
+    
+    lowBand.setName("Low");
+    midBand.setName("Mid");
+    highBand.setName("High");
+
+    lowBand.setRadioGroupId(1);
+    midBand.setRadioGroupId(1);
+    highBand.setRadioGroupId(1);
+    
+    addAndMakeVisible(lowBand);
+    addAndMakeVisible(midBand);
+    addAndMakeVisible(highBand);
+
 }
 
 void CompressorBandControls::resized()
@@ -408,7 +421,7 @@ void CompressorBandControls::resized()
     };
     
     auto bandbuttonControlBox = createBandButtonControlBox({&bypassButton,&soloButton,&muteButton});
-    
+    auto bandButtonSelectBox = createBandButtonControlBox({&lowBand,&midBand,&highBand});
     
     FlexBox flexBox;
     flexBox.flexDirection = FlexBox::Direction::row;
@@ -417,7 +430,11 @@ void CompressorBandControls::resized()
     auto spacer = FlexItem().withWidth(4);
     auto endCap = FlexItem().withWidth(6);
     
-    flexBox.items.add(endCap);
+//    flexBox.items.add(endCap);
+    
+    flexBox.items.add(spacer);
+    flexBox.items.add(FlexItem(bandButtonSelectBox).withWidth(50));
+    flexBox.items.add(spacer);
     flexBox.items.add(FlexItem(attackSlider).withFlex(1.f));
     flexBox.items.add(spacer);
     flexBox.items.add(FlexItem(releaseSlider).withFlex(1.f));

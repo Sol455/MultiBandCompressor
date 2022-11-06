@@ -440,7 +440,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout MultibandCompressorAudioProc
                                                     0 ));
 
 
-    auto thresholdRange = juce::NormalisableRange<float>(-60, 12, 1, 1);
+    auto thresholdRange = juce::NormalisableRange<float>(MIN_THRESHOLD, MAX_DECIBELS, 1, 1);
     layout.add(std::make_unique<juce::AudioParameterFloat>(ParameterID {params.at(Names::Threshold_Low_Band), 1},
                                                     params.at(Names::Threshold_Low_Band),
                                                     thresholdRange,

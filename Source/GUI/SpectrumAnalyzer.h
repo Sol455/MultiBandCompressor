@@ -65,5 +65,9 @@ private:
     
     juce::AudioParameterFloat* lowMidXoverParam {nullptr};
     juce::AudioParameterFloat* midHighXoverParam {nullptr};
+    
+    juce::AudioParameterFloat* lowThresholdParam {nullptr};
+    juce::AudioParameterFloat* midThresholdParam {nullptr};
+    juce::AudioParameterFloat* highThresholdParam {nullptr};
 
 };

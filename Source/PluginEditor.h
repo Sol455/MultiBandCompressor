@@ -19,7 +19,8 @@
 
 /**
 */
-class MultibandCompressorAudioProcessorEditor  : public juce::AudioProcessorEditor
+class MultibandCompressorAudioProcessorEditor  : public juce::AudioProcessorEditor,
+juce::Timer
 {
 public:
     MultibandCompressorAudioProcessorEditor (MultibandCompressorAudioProcessor&);
@@ -28,7 +29,8 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
-
+    
+    void timerCallback() override;
 private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.

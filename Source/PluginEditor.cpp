@@ -23,6 +23,8 @@ MultibandCompressorAudioProcessorEditor::MultibandCompressorAudioProcessorEditor
     addAndMakeVisible(bandControls);
 
     setSize (600, 500);
+    
+    startTimerHz(60);
 }
 
 MultibandCompressorAudioProcessorEditor::~MultibandCompressorAudioProcessorEditor()
@@ -56,4 +58,19 @@ void MultibandCompressorAudioProcessorEditor::resized()
     globalcontrols.setBounds(bounds);
 }
 
+void MultibandCompressorAudioProcessorEditor::timerCallback()
+{
+    std::vector<float> values
+    {
+        audioProcessor.lowBandComp.getRMSInputLebelDb(),
+        audioProcessor.lowBandComp.getRMSOutputLebelDb(),
+        audioProcessor.midBandComp.getRMSInputLebelDb(),
+        audioProcessor.midBandComp.getRMSOutputLebelDb(),
+        audioProcessor.highBandComp.getRMSInputLebelDb(),
+        audioProcessor.highBandComp.getRMSOutputLebelDb()
+        
+    };
+    
+    analyzer.update(values);
+}
 //==============================================================================

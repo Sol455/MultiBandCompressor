@@ -201,6 +201,8 @@ void MultibandCompressorAudioProcessor::prepareToPlay (double sampleRate, int sa
         buffer.setSize(spec.numChannels, samplesPerBlock);
     }
     
+    leftChannelFifo.prepare(samplesPerBlock);
+    rightChannelFifo.prepare(samplesPerBlock);
     
 }
 
@@ -296,6 +298,10 @@ void MultibandCompressorAudioProcessor::processBlock (juce::AudioBuffer<float>& 
         buffer.clear (i, 0, buffer.getNumSamples());
     
     updateState();
+    
+    leftChannelFifo.update(buffer);
+    rightChannelFifo.update(buffer);
+    
     applyGain(buffer, inputGain);
         
     splitBands(buffer);

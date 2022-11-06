@@ -306,7 +306,7 @@ void MultibandCompressorAudioProcessor::processBlock (juce::AudioBuffer<float>& 
     
     updateState();
     
-    if(true)
+    if(false)
     {
         buffer.clear();
         auto block = juce::dsp::AudioBlock<float>(buffer);

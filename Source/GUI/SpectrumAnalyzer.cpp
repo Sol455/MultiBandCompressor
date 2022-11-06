@@ -10,6 +10,7 @@
 
 #include "SpectrumAnalyzer.h"
 #include "Utilities.h"
+#include "../DSP/Params.h"
 
 SpectrumAnalyzer::SpectrumAnalyzer(MultibandCompressorAudioProcessor& p) :
 audioProcessor(p),
@@ -21,6 +22,18 @@ rightPathProducer(audioProcessor.rightChannelFifo)
     {
         param->addListener(this);
     }
+    
+    using namespace Params;
+    const auto& paramNames = GetParams();
+    
+    auto floatHelper = [&apvts = audioProcessor.apvts, &paramNames](auto& param, const auto& paramName)
+    {
+        param = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(paramNames.at(paramName)));
+        jassert(param !=nullptr);
+    };
+    
+    floatHelper(lowMidXoverParam, Names::Low_Mid_Crossover_Freq);
+    floatHelper(midHighXoverParam, Names::Mid_High_Crossover_Freq);
     
     startTimerHz(60);
 }
@@ -88,11 +101,38 @@ void SpectrumAnalyzer::paint (juce::Graphics& g)
 //    g.setColour(Colours::black);
     
     //g.fillPath(border);
-    
+    drawCrossovers(g, bounds);
     drawTextLabels(g, bounds);
     
 //    g.setColour(Colours::orange);
 //    g.drawRoundedRectangle(getRenderArea(bounds).toFloat(), 4.f, 1.f);
+}
+void SpectrumAnalyzer::drawCrossovers(juce::Graphics &g, juce::Rectangle<int> bounds)
+{
+    using namespace juce;
+    bounds = getAnalysisArea(bounds);
+    
+    const auto top = bounds.getY();
+    const auto bottom = bounds.getBottom();
+    
+    auto mapX = [left = bounds.getX(),
+                 width = bounds.getWidth()]
+                (float frequency)
+    {
+        auto normX = juce::mapFromLog10(frequency,
+                                        MIN_FREQUENCY,
+                                        MAX_FREQUENCY);
+        return left + width * normX ;
+    };
+    
+    auto lowMidX = mapX(lowMidXoverParam->get());
+    g.setColour(Colours::orange);
+    g.drawVerticalLine(lowMidX, top, bottom);
+    
+    auto midHighX = mapX(midHighXoverParam->get());
+    g.drawVerticalLine(midHighX, top, bottom);
+
+    
 }
 
 std::vector<float> SpectrumAnalyzer::getFrequencies()
@@ -127,7 +167,7 @@ std::vector<float> SpectrumAnalyzer::getXs(const std::vector<float> &freqs, floa
     std::vector<float> xs;
     for( auto f : freqs )
     {
-        auto normX = juce::mapFromLog10(f, 20.f, 20000.f);
+        auto normX = juce::mapFromLog10(f, MIN_FREQUENCY, MAX_FREQUENCY);
         xs.push_back( left + width * normX );
     }
     
@@ -287,7 +327,7 @@ void SpectrumAnalyzer::timerCallback()
 
     if( parametersChanged.compareAndSetBool(false, true) )
     {
-
+        
     }
     
     repaint();

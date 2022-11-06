@@ -201,12 +201,12 @@ private:
 
 //==============================================================================
 
-struct ResponseCurveComponent: juce::Component,
+struct SpectrumAnalyzer: juce::Component,
 juce::AudioProcessorParameter::Listener,
 juce::Timer
 {
-    ResponseCurveComponent(MultibandCompressorAudioProcessor&);
-    ~ResponseCurveComponent();
+    SpectrumAnalyzer(MultibandCompressorAudioProcessor&);
+    ~SpectrumAnalyzer();
     
     void parameterValueChanged (int parameterIndex, float newValue) override;
 
@@ -227,14 +227,6 @@ private:
     bool shouldShowFFTAnalysis = true;
 
     juce::Atomic<bool> parametersChanged { false };
-    
-    //MonoChain monoChain;
-
-    //void updateResponseCurve();
-    
-   // juce::Path responseCurve;
-
-   // void updateChain();
     
     void drawBackgroundGrid(juce::Graphics& g);
     void drawTextLabels(juce::Graphics& g);
@@ -274,7 +266,7 @@ private:
     Placeholder controlBar/*, analyzer globalControls bandControls;*/;
     GlobalControls globalcontrols{audioProcessor.apvts};
     CompressorBandControls bandControls{audioProcessor.apvts};
-    ResponseCurveComponent analyzer{audioProcessor};
+    SpectrumAnalyzer analyzer{audioProcessor};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MultibandCompressorAudioProcessorEditor)
 };
